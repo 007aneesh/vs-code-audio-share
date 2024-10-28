@@ -2,8 +2,6 @@
 
 **SnippetSound** is a VS Code extension for developers to record, share, and sync audio commentary with their code, making it easier to collaborate and communicate ideas. Bring your code to life with voice explanations and real-time audio!
 
-![SnippetSound Logo](https://via.placeholder.com/150)
-
 ---
 
 ## 🚀 Features
