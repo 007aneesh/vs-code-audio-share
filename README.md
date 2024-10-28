@@ -23,7 +23,7 @@
 Alternatively, install via the CLI:
 
 ```bash
-code --install-extension 007aneesh.snippetsound
+coming soon
 ```
 
 ---
@@ -38,14 +38,6 @@ code --install-extension 007aneesh.snippetsound
 > **Note**: The broadcast mode requires you to have permissions enabled for sharing audio in real-time.
 
 ---
-
-# ## 🎥 Demo
-
-# Check out a video demonstration to see **SnippetSound** in action!
-
-# ![SnippetSound Demo](https://via.placeholder.com/600x300) <!-- Replace with a GIF or video link -->
-
-# ---
 
 ## 🤝 Contributing
 
