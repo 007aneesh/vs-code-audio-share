@@ -24,6 +24,7 @@ Alternatively, install via the CLI:
 
 ```bash
 code --install-extension 007aneesh.snippetsound
+```
 
 ---
 
