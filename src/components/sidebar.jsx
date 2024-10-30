@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { FiMic, FiMicOff } from "react-icons/fi";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import Modal from "./modal";
 
 const participants = [
   {
@@ -40,12 +42,47 @@ const participants = [
   },
 ];
 
+const dropdownOptions = [
+  { label: "Add Participants", action: "add_participant" },
+  { label: "Notifications", action: "notifications" },
+];
+
 function Sidebar() {
+  const [isDropdownOpen, setDropdownOpen] = useState(false);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState("");
+
+  const room_id = "3773-4232-2378";
+
+  const handleDropdownClick = (action) => {
+    setModalContent(action);
+    setModalOpen(true);
+    setDropdownOpen(false);
+  };
+
   return (
-    <div className="fixed right-0 top-0 h-full w-64 bg-white shadow-lg p-4">
+    <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-lg p-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Participant {participants.length}</h2>
-        <BsThreeDotsVertical className="text-gray-500" />
+        <h2 className="text-lg font-semibold">Room Id: {room_id}</h2>
+        <div className="relative">
+          <BsThreeDotsVertical
+            className="text-gray-500 cursor-pointer"
+            onClick={() => setDropdownOpen(!isDropdownOpen)}
+          />
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg">
+              {dropdownOptions.map((option) => (
+                <button
+                  key={option.action}
+                  onClick={() => handleDropdownClick(option.action)}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <ul className="space-y-3">
@@ -77,6 +114,17 @@ function Sidebar() {
           </li>
         ))}
       </ul>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        title={
+          modalContent === "add_participant"
+            ? "Add Participants"
+            : "Notifications"
+        }
+      />
+        
     </div>
   );
 }

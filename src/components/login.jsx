@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import { useForm } from "react-hook-form";
-import { FcGoogle } from "react-icons/fc";
+// import { FcGoogle } from "react-icons/fc";
 
 function LoginForm({ onLogin }) {
   const { register, handleSubmit } = useForm();
@@ -56,13 +56,13 @@ function LoginForm({ onLogin }) {
           </button>
         </form>
 
-        <div className="flex items-center my-4">
+        {/* <div className="flex items-center my-4">
           <hr className="w-full border-gray-300" />
           <span className="px-2 text-gray-500">or</span>
           <hr className="w-full border-gray-300" />
-        </div>
+        </div> */}
 
-        <button className="flex items-center justify-center w-full border border-gray-300 py-3 rounded-lg hover:bg-gray-100">
+        {/* <button className="flex items-center justify-center w-full border border-gray-300 py-3 rounded-lg hover:bg-gray-100">
           <FcGoogle className="mr-2" />
           Sign in with Google
         </button>
@@ -72,7 +72,7 @@ function LoginForm({ onLogin }) {
           <a href="#" className="text-blue-500">
             Sign up
           </a>
-        </p>
+        </p> */}
       </div>
     </div>
   );
