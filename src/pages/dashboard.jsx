@@ -25,6 +25,7 @@ function Dashboard() {
       action,
       answer
     });
+    set_requests((prev) => prev?.filter((item) => item.hostId !== hostId));
   }
 
   useEffect(() => {
@@ -37,7 +38,13 @@ function Dashboard() {
     });
     socket.on(`join_request-${uuid?.userId}`, (data) => {
       console.log("Request", data);
-      set_requests((prev) => [...prev, data]);
+      set_requests((prev) => {
+        console.log(prev?.find((item) => item?.hostId === data?.hostId))
+        if(!prev?.find((item) => item?.hostId === data?.hostId)){
+          return [...prev, data];
+        }
+        return prev;
+      });
     });
     socket.on(`join_request_response-${uuid?.userId}`, (data) => {
       console.log("Response", data);

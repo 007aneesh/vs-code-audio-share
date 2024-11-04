@@ -23,6 +23,7 @@ function Modal({ isOpen, uuid, onClose, title }) {
       friends: data?.participants,
       offer
     });
+    onClose();
   };
 
   useEffect(() => {
