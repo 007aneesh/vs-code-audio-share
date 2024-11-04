@@ -3,7 +3,7 @@ import Dashboard from "./pages/dashboard";
 import LoginForm from "./components/login";
 
 function App() {
-  const [loggedIn, setLoggedIn] = useState(false); 
+  const [loggedIn, setLoggedIn] = useState(true); 
 
   const handleLogin = () => {
     setLoggedIn(true); 

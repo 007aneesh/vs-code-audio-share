@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 
-function Modal({ isOpen, onClose, title }) {
+function Modal({ isOpen, uuid, onClose, title }) {
   const { register, handleSubmit, control, reset } = useForm({
     defaultValues: {
       participants: [{ roomId: "" }],
@@ -14,7 +14,7 @@ function Modal({ isOpen, onClose, title }) {
   });
 
   const onSubmit = (data) => {
-    console.log("Form Data:", data);
+    console.log("Form Data:", data, uuid);
     onClose();
   };
 

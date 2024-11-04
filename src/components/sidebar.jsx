@@ -47,12 +47,12 @@ const dropdownOptions = [
   { label: "Notifications", action: "notifications" },
 ];
 
-function Sidebar() {
+function Sidebar({ uuid }) {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState("");
 
-  const room_id = "3773-4232-2378";
+  const room_id = uuid?.userId;
 
   const handleDropdownClick = (action) => {
     setModalContent(action);
@@ -118,13 +118,13 @@ function Sidebar() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setModalOpen(false)}
+        uuid={uuid}
         title={
           modalContent === "add_participant"
             ? "Add Participants"
             : "Notifications"
         }
       />
-        
     </div>
   );
 }
