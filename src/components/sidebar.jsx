@@ -119,11 +119,7 @@ function Sidebar({ uuid }) {
         isOpen={isModalOpen}
         onClose={() => setModalOpen(false)}
         uuid={uuid}
-        title={
-          modalContent === "add_participant"
-            ? "Add Participants"
-            : "Notifications"
-        }
+        title={"Add Participants"}
       />
     </div>
   );

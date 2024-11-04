@@ -1,11 +1,13 @@
 /* eslint-disable react/prop-types */
 import { useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
+import { socket } from "../utils/socket";
 
 function Modal({ isOpen, uuid, onClose, title }) {
+  const offer = `OFFER FROM WEBRTC ${uuid?.userId}`;
   const { register, handleSubmit, control, reset } = useForm({
     defaultValues: {
-      participants: [{ roomId: "" }],
+      participants: [""],
     },
   });
   const { fields, append } = useFieldArray({
@@ -14,14 +16,19 @@ function Modal({ isOpen, uuid, onClose, title }) {
   });
 
   const onSubmit = (data) => {
-    console.log("Form Data:", data, uuid);
-    onClose();
+    // console.log("Form Data:", data, uuid);
+    if(!uuid?.userId) return;
+    socket.emit("add_participant", {
+      hostId: uuid?.userId,
+      friends: data?.participants,
+      offer
+    });
   };
 
   useEffect(() => {
     if (!isOpen) {
       reset({
-        participants: [{ roomId: "" }],
+        participants: [""],
       });
     }
   }, [isOpen, reset]);
@@ -48,15 +55,15 @@ function Modal({ isOpen, uuid, onClose, title }) {
                 {fields.map((field, index) => (
                   <input
                     key={field.id}
-                    type="number"
-                    {...register(`participants.${index}.roomId`)}
+                    type="text"
+                    {...register(`participants.${index}`)}
                     placeholder="Room ID of participant"
                     className="border p-2 bg-gray-50 border-gray-300 rounded-lg outline-none"
                   />
                 ))}
                 <button
                   type="button"
-                  onClick={() => append({ roomId: "" })}
+                  onClick={() => append("")}
                   className="bg-green-500 text-white px-4 py-2 rounded mt-4"
                 >
                   Add another user

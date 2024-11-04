@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const base_url = "https://pn-household-jamie-accepts.trycloudflare.com";
+const base_url = "http://localhost:4000";
 
 export function getUserId() {
   try {
