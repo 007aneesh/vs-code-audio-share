@@ -3,8 +3,9 @@ import { useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { socket } from "../utils/socket";
 
-function Modal({ isOpen, uuid, onClose, title }) {
+function Modal({ isOpen, uuid, onClose, title, requests, handleAction }) {
   const offer = `OFFER FROM WEBRTC ${uuid?.userId}`;
+
   const { register, handleSubmit, control, reset } = useForm({
     defaultValues: {
       participants: [""],
@@ -16,12 +17,11 @@ function Modal({ isOpen, uuid, onClose, title }) {
   });
 
   const onSubmit = (data) => {
-    // console.log("Form Data:", data, uuid);
-    if(!uuid?.userId) return;
+    if (!uuid?.userId) return;
     socket.emit("add_participant", {
       hostId: uuid?.userId,
       friends: data?.participants,
-      offer
+      offer,
     });
     onClose();
   };
@@ -77,6 +77,39 @@ function Modal({ isOpen, uuid, onClose, title }) {
                 </button>
               </div>
             </form>
+          )}
+
+          {title === "Requests" && (
+            <div className="flex flex-col gap-y-4 mt-8">
+              {requests.map((item) => (
+                <div
+                  key={item.hostId}
+                  className="flex flex-col items-start bg-gray-100 p-3 rounded-md"
+                >
+                  <p>Host ID: {item.hostId}</p>
+                  <div className="flex gap-2 mt-2 w-full justify-end">
+                    <button
+                      onClick={() => {
+                        handleAction(item.hostId, "ACCEPT");
+                        onClose();
+                      }}
+                      className="bg-green-500 text-white px-4 py-1 rounded"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleAction(item.hostId, "DECLINE");
+                        onClose();
+                      }}
+                      className="bg-red-500 text-white px-4 py-1 rounded"
+                    >
+                      Decline
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>

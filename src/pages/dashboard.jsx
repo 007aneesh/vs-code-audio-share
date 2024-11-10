@@ -1,19 +1,16 @@
-// dashboard.jsx
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import BottomNavbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import useDashboardStore from "../utils/store";
-import { SOCKET_EVENTS, JOIN_REQUEST_ACTION } from "../utils/constant";
+import { SOCKET_EVENTS } from "../utils/constant";
 import { socket } from "../utils/socket";
+import Modal from "../components/modal";
 
 function Dashboard() {
-  const {
-    uuid,
-    requests,
-    setUuid,
-    removeRequest,
-    handleSocketEvents,
-  } = useDashboardStore();
+  const { uuid, requests, setUuid, removeRequest, handleSocketEvents } =
+    useDashboardStore();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const answer = `ANSWER FROM WEBRTC ${uuid?.userId}`;
 
@@ -37,40 +34,30 @@ function Dashboard() {
     removeRequest(hostId);
   };
 
+  useEffect(() => {
+    if (requests.length > 0) {
+      setIsModalOpen(true);
+    }
+  }, [requests]);
+
+  const closeModal = () => setIsModalOpen(false);
+
   return (
     <div className="relative min-h-screen">
       <div className="flex">
         <div className="flex-grow">
-          {requests.map((item) => (
-            <div
-              key={item.hostId}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "start",
-              }}
-            >
-              <p>{item.hostId}</p>
-              <button
-                onClick={() =>
-                  handle_action(item.hostId, JOIN_REQUEST_ACTION.ACCEPT)
-                }
-              >
-                Accept
-              </button>
-              <button
-                onClick={() =>
-                  handle_action(item.hostId, JOIN_REQUEST_ACTION.DECLINE)
-                }
-              >
-                Decline
-              </button>
-            </div>
-          ))}
+          <Sidebar uuid={uuid} />
         </div>
-        <Sidebar uuid={uuid} />
       </div>
       <BottomNavbar />
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title="Requests"
+        uuid={uuid}
+        requests={requests}
+        handleAction={handle_action}
+      />
     </div>
   );
 }

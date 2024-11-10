@@ -8,8 +8,22 @@ const useDashboardStore = create((set) => ({
   requests: [],
 
   setUuid: async () => {
-    const response = await getUserId();
-    set({ uuid: response.data });
+    const storedUuid = localStorage.getItem("uuid");
+    const parsedUuid = JSON.parse(storedUuid);
+    if (storedUuid) {
+      try {
+        set({ uuid: parsedUuid });
+      } catch (error) {
+        console.error("Failed to parse UUID from localStorage", error);
+        localStorage.removeItem("uuid");
+      }
+    }
+
+    if (!storedUuid || !parsedUuid) {
+      const response = await getUserId();
+      localStorage.setItem("uuid", JSON.stringify(response.data)); 
+      set({ uuid: response.data });
+    }
   },
 
   addRequest: (data) =>

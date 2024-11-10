@@ -1,9 +1,10 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
-import { FiMic, FiMicOff } from "react-icons/fi";
+import { FiCopy, FiMic, FiMicOff } from "react-icons/fi";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import Modal from "./modal";
 import { DROPDOWN_OPTIONS } from "../utils/constant";
+import { handleCopy } from "../utils/common";
 
 const participants = [
   {
@@ -52,15 +53,24 @@ function Sidebar({ uuid }) {
   const room_id = uuid?.userId;
 
   const handleDropdownClick = (action) => {
-    setModalContent(action);
+    setModalContent(action.label);
     setModalOpen(true);
     setDropdownOpen(false);
   };
 
   return (
     <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-lg p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Room Id: {room_id}</h2>
+      <div className="flex justify-between items-center mb-4 gap-5">
+        <div className="flex items-center gap-1">
+          <h2 className="text-base font-semibold truncate w-48">Room Id: {room_id}</h2>
+          <button
+            onClick={() => handleCopy(room_id)}
+            className="text-blue-500 hover:text-blue-700"
+            title="Copy Room ID"
+          >
+            <FiCopy className="inline w-5 h-5" />
+          </button>
+        </div>
         <div className="relative">
           <BsThreeDotsVertical
             className="text-gray-500 cursor-pointer"
@@ -71,7 +81,7 @@ function Sidebar({ uuid }) {
               {DROPDOWN_OPTIONS.map((option) => (
                 <button
                   key={option.action}
-                  onClick={() => handleDropdownClick(option.action)}
+                  onClick={() => handleDropdownClick(option)}
                   className="w-full text-left px-4 py-2 hover:bg-gray-100"
                 >
                   {option.label}
