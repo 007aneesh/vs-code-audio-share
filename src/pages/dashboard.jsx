@@ -1,81 +1,72 @@
-import { useEffect, useState } from "react";
+// dashboard.jsx
+import { useEffect } from "react";
 import BottomNavbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
-import { getUserId } from "../utils/api";
+import useDashboardStore from "../utils/store";
+import { SOCKET_EVENTS, JOIN_REQUEST_ACTION } from "../utils/constant";
 import { socket } from "../utils/socket";
 
 function Dashboard() {
-  const [uuid, setuuid] = useState();
-  const [requests, set_requests] = useState([]);
+  const {
+    uuid,
+    requests,
+    setUuid,
+    removeRequest,
+    handleSocketEvents,
+  } = useDashboardStore();
+
   const answer = `ANSWER FROM WEBRTC ${uuid?.userId}`;
 
-  async function getUser() {
-    const response = await getUserId();
-    setuuid(response.data);
-  }
+  useEffect(() => {
+    setUuid();
+  }, [setUuid]);
 
   useEffect(() => {
-    getUser();
-  }, []);
+    if (!uuid?.userId) return;
+    const cleanup = handleSocketEvents(uuid.userId);
+    return cleanup;
+  }, [uuid, handleSocketEvents]);
 
   const handle_action = (hostId, action) => {
-    socket.emit("join_request_action", {
+    socket.emit(SOCKET_EVENTS.JOIN_REQUEST_ACTION, {
       userId: uuid?.userId,
       hostId,
       action,
-      answer
+      answer,
     });
-    set_requests((prev) => prev?.filter((item) => item.hostId !== hostId));
-  }
-
-  useEffect(() => {
-    if(!uuid?.userId) return;
-    socket.on("connect", () => {
-      console.log("connected");
-    });
-    socket.on("disconnect", () => {
-      console.log("dis");
-    });
-    socket.on(`join_request-${uuid?.userId}`, (data) => {
-      console.log("Request", data);
-      set_requests((prev) => {
-        console.log(prev?.find((item) => item?.hostId === data?.hostId))
-        if(!prev?.find((item) => item?.hostId === data?.hostId)){
-          return [...prev, data];
-        }
-        return prev;
-      });
-    });
-    socket.on(`join_request_response-${uuid?.userId}`, (data) => {
-      console.log("Response", data);
-    });
-    return () => {
-      socket.off("connect");
-      socket.off("disconnect");
-      socket.off(`join_request-${uuid?.userId}`);
-      socket.off(`join_request_response-${uuid?.userId}`);
-    }
-  }, [uuid]);
+    removeRequest(hostId);
+  };
 
   return (
     <div className="relative min-h-screen">
       <div className="flex">
         <div className="flex-grow">
-          {
-            requests.map((item) => {
-              return (
-                <div style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "start"
-                }}>
-                  <p>{item?.hostId}</p>
-                  <button onClick={() => handle_action(item?.hostId, "accept")}>Accept</button>
-                  <button onClick={() => handle_action(item?.hostId, "decline")}>Decline</button>
-                </div>
-              )
-            })
-          }
+          {requests.map((item) => (
+            <div
+              key={item.hostId}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "start",
+              }}
+            >
+              <p>{item.hostId}</p>
+              <button
+                onClick={() =>
+                  handle_action(item.hostId, JOIN_REQUEST_ACTION.ACCEPT)
+                }
+              >
+                Accept
+              </button>
+              <button
+                onClick={() =>
+                  handle_action(item.hostId, JOIN_REQUEST_ACTION.DECLINE)
+                }
+              >
+                Decline
+              </button>
+            </div>
+          ))}
         </div>
         <Sidebar uuid={uuid} />
       </div>

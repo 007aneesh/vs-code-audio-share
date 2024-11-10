@@ -1,7 +1,9 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import { FiMic, FiMicOff } from "react-icons/fi";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import Modal from "./modal";
+import { DROPDOWN_OPTIONS } from "../utils/constant";
 
 const participants = [
   {
@@ -42,11 +44,6 @@ const participants = [
   },
 ];
 
-const dropdownOptions = [
-  { label: "Add Participants", action: "add_participant" },
-  { label: "Notifications", action: "notifications" },
-];
-
 function Sidebar({ uuid }) {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
@@ -71,7 +68,7 @@ function Sidebar({ uuid }) {
           />
           {isDropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg">
-              {dropdownOptions.map((option) => (
+              {DROPDOWN_OPTIONS.map((option) => (
                 <button
                   key={option.action}
                   onClick={() => handleDropdownClick(option.action)}
@@ -119,10 +116,16 @@ function Sidebar({ uuid }) {
         isOpen={isModalOpen}
         onClose={() => setModalOpen(false)}
         uuid={uuid}
-        title={"Add Participants"}
+        title={modalContent}
       />
     </div>
   );
 }
+
+Sidebar.propTypes = {
+  uuid: PropTypes.shape({
+    userId: PropTypes.string,
+  }),
+};
 
 export default Sidebar;
