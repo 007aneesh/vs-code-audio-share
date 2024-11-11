@@ -47,7 +47,7 @@ const dropdownOptions = [
   { label: "Notifications", action: "notifications" },
 ];
 
-function Sidebar({ uuid }) {
+function Sidebar({ uuid, createOffer }) {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState("");
@@ -119,6 +119,7 @@ function Sidebar({ uuid }) {
         isOpen={isModalOpen}
         onClose={() => setModalOpen(false)}
         uuid={uuid}
+        createOffer={createOffer}
         title={"Add Participants"}
       />
     </div>

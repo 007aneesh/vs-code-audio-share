@@ -3,8 +3,7 @@ import { useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { socket } from "../utils/socket";
 
-function Modal({ isOpen, uuid, onClose, title }) {
-  const offer = `OFFER FROM WEBRTC ${uuid?.userId}`;
+function Modal({ isOpen, uuid, onClose, title, createOffer }) {
   const { register, handleSubmit, control, reset } = useForm({
     defaultValues: {
       participants: [""],
@@ -15,9 +14,10 @@ function Modal({ isOpen, uuid, onClose, title }) {
     name: "participants",
   });
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     // console.log("Form Data:", data, uuid);
     if(!uuid?.userId) return;
+    const offer = await createOffer();
     socket.emit("add_participant", {
       hostId: uuid?.userId,
       friends: data?.participants,
