@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BottomNavbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import { getUserId } from "../utils/api";
@@ -10,7 +10,7 @@ function Dashboard() {
   const [requests, set_requests] = useState([]);
   const [audioTracks, setAudioTracks] = useState();
 
-  const { createAnswer, createOffer, acceptAnswer } = useWebrtc();
+  const { createAnswer, createOffer, acceptOffer } = useMemo(() => useWebrtc(), []);
 
   async function getUser() {
     const response = await getUserId();
@@ -23,7 +23,7 @@ function Dashboard() {
 
   const handle_action = async (hostId, action, offer) => {
     let answer = "";
-    if(action === "accept") answer = await createAnswer(offer);
+    if (action === "accept") answer = await createAnswer(offer);
     console.log(offer, hostId, {
       userId: uuid?.userId,
       hostId,
@@ -58,8 +58,8 @@ function Dashboard() {
     });
     socket.on(`join_request_response-${uuid?.userId}`, (data) => {
       console.log("Response", data);
-      if(data?.action === "accept"){
-        acceptAnswer(data?.answer);
+      if (data?.action === "accept") {
+        acceptOffer(data?.answer);
       }
     });
     return () => {
