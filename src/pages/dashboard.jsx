@@ -1,43 +1,56 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import BottomNavbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
-import { getUserId } from "../utils/api";
 import { socket } from "../utils/socket";
 import { useWebrtc } from "../utils/webrtc";
+import { useAudio } from "../utils/audio";
+import ReactPlayer from "react-player";
+import useDashboardStore from "../utils/store";
 
 function Dashboard() {
-  const [uuid, setuuid] = useState();
   const [requests, set_requests] = useState([]);
-  const [audioTracks, setAudioTracks] = useState();
+  const [isConnected, setIsConnected] = useState(false);
+  const [remoteStream, setRemoteStream] = useState();
+  const [uuid, setUuidState] = useState(null); // Local state to manage uuid loading
 
-  const { createAnswer, createOffer, acceptOffer } = useMemo(() => useWebrtc(), []);
+  const { createAnswer, createOffer, acceptOffer, peerConnection } =
+    useWebrtc();
 
-  async function getUser() {
-    const response = await getUserId();
-    setuuid(response.data);
-  }
+  const setUuid = useDashboardStore((state) => state.setUuid);
 
+  // Fetch the UUID when the component mounts
   useEffect(() => {
-    getUser();
-  }, []);
+    const fetchUuid = async () => {
+      await setUuid();
+      const currentUuid = useDashboardStore.getState().uuid;
+      setUuidState(currentUuid); // Store the uuid in local state
+    };
+
+    fetchUuid();
+  }, [setUuid]);
+
+  const { audioTracks } = useAudio(uuid); // Now we can safely use uuid
 
   const handle_action = async (hostId, action, offer) => {
     let answer = "";
-    if (action === "accept") answer = await createAnswer(offer);
+    if (action === "accept") {
+      answer = await createAnswer(offer);
+      setIsConnected(true);
+    }
     console.log(offer, hostId, {
       userId: uuid?.userId,
       hostId,
       action,
-      answer
+      answer,
     });
     socket.emit("join_request_action", {
       userId: uuid?.userId,
       hostId,
       action,
-      answer
+      answer,
     });
     set_requests((prev) => prev?.filter((item) => item.hostId !== hostId));
-  }
+  };
 
   useEffect(() => {
     if (!uuid?.userId) return;
@@ -60,6 +73,7 @@ function Dashboard() {
       console.log("Response", data);
       if (data?.action === "accept") {
         acceptOffer(data?.answer);
+        setIsConnected(true);
       }
     });
     return () => {
@@ -67,35 +81,64 @@ function Dashboard() {
       socket.off("disconnect");
       socket.off(`join_request-${uuid?.userId}`);
       socket.off(`join_request_response-${uuid?.userId}`);
-    }
+    };
   }, [uuid]);
 
   useEffect(() => {
-    (async () => {
-      const tracks = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      setAudioTracks(tracks);
-    })();
-  }, []);
+    if (!isConnected || !audioTracks) return;
+    audioTracks.getTracks().forEach((track) => {
+      peerConnection.addTrack(track);
+    });
+  }, [isConnected, audioTracks, peerConnection]);
+
+  useEffect(() => {
+    if (!isConnected) return;
+    peerConnection.addEventListener("track", (event) => {
+      setRemoteStream(event.streams[0]);
+    });
+
+    return () => {
+      peerConnection.removeEventListener("track", () => setRemoteStream(null));
+    };
+  }, [isConnected, peerConnection]);
+
+  // Conditional rendering: Only render when uuid is available
+  if (!uuid) {
+    return <div>Loading...</div>; // Or any other loading UI you prefer
+  }
 
   return (
     <div className="relative min-h-screen">
       <div className="flex">
+        <div>
+          <ReactPlayer url={audioTracks} muted controls playing />
+          <ReactPlayer url={remoteStream} controls playing />
+        </div>
         <div className="flex-grow">
-          {
-            requests.map((item) => {
-              return (
-                <div style={{
+          {requests.map((item, index) => {
+            return (
+              <div
+                key={index}
+                style={{
                   display: "flex",
                   flexDirection: "column",
-                  alignItems: "start"
-                }}>
-                  <p>{item?.hostId}</p>
-                  <button onClick={() => handle_action(item?.hostId, "accept", item?.offer)}>Accept</button>
-                  <button onClick={() => handle_action(item?.hostId, "decline")}>Decline</button>
-                </div>
-              )
-            })
-          }
+                  alignItems: "start",
+                }}
+              >
+                <p>{item?.hostId}</p>
+                <button
+                  onClick={() =>
+                    handle_action(item?.hostId, "accept", item?.offer)
+                  }
+                >
+                  Accept
+                </button>
+                <button onClick={() => handle_action(item?.hostId, "decline")}>
+                  Decline
+                </button>
+              </div>
+            );
+          })}
         </div>
         <Sidebar uuid={uuid} createOffer={createOffer} />
       </div>

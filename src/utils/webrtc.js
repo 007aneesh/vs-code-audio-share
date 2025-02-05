@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo } from "react";
 
 const servers = {
     iceServers: [
@@ -7,6 +7,7 @@ const servers = {
         }
     ]
 };
+
 const pcConstraints = {
     'optional': [
         { 'DtlsSrtpKeyAgreement': true },
@@ -14,14 +15,14 @@ const pcConstraints = {
 };
 
 export const useWebrtc = () => {
-    let peerConnection = new RTCPeerConnection(servers);
+    let peerConnection = useMemo(() => new RTCPeerConnection(servers), []);
 
-    const createOffer = async () => {
+    const createOffer = useCallback(async () => {
         const offer = await peerConnection.createOffer();     // P1 - Call -> P2
         console.log(offer);                                   // Call -> Offer
         peerConnection.setLocalDescription(offer);            // Offer is local connection
         return offer;
-    }
+    }, [peerConnection]);
 
     const createAnswer = async (offer) => {
         await peerConnection.setRemoteDescription(offer);     // P2 -> offer save as remote connection
@@ -31,17 +32,14 @@ export const useWebrtc = () => {
     }
 
     const acceptOffer = async (answer) => {
-        if(peerConnection.currentRemoteDescription) return;   // P1 -> Answer -> Remote connection
+        if (peerConnection.currentRemoteDescription) return;   // P1 -> Answer -> Remote connection
         await peerConnection.setRemoteDescription(answer);
-    }
-
-    const resetConnection = () => {
-        peerConnection = new RTCPeerConnection(servers);
     }
 
     return {
         createOffer,
         createAnswer,
-        acceptOffer
+        acceptOffer,
+        peerConnection
     }
 }
