@@ -1,16 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import BottomNavbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import { getUserId } from "../utils/api";
 import { socket } from "../utils/socket";
 import { useWebrtc } from "../utils/webrtc";
+import { useAudio } from "../utils/audio";
+import ReactPlayer from "react-player";
 
 function Dashboard() {
   const [uuid, setuuid] = useState();
   const [requests, set_requests] = useState([]);
-  const [audioTracks, setAudioTracks] = useState();
+  const [remoteStream, setRemoteStream] = useState();
 
-  const { createAnswer, createOffer, acceptOffer } = useMemo(() => useWebrtc(), []);
+  const { allTracks } = useAudio(uuid);
+
+  const { createAnswer, createOffer, acceptOffer, peerConnection } = useWebrtc();
 
   async function getUser() {
     const response = await getUserId();
@@ -21,15 +25,38 @@ function Dashboard() {
     getUser();
   }, []);
 
+  const handle_negotiation_request = async () => {
+    const offer = await createOffer();
+    socket.emit("add_participant", {
+      hostId: uuid?.userId,
+      friends: data?.participants,
+      offer
+    });
+  }
+
+  const senStreams = (peer) => {
+    const pc = peer ?? peerConnection
+    allTracks.getTracks().forEach((track) => {
+      pc.addTrack(track, allTracks);
+    });
+  }
+  
+  const getStreams = (peer) => {
+    const pc = peer ?? peerConnection
+    pc.ontrack = (event) => {
+      console.log(event);
+      setRemoteStream(event.streams[0]);
+    };
+  }
+
   const handle_action = async (hostId, action, offer) => {
     let answer = "";
-    if (action === "accept") answer = await createAnswer(offer);
-    console.log(offer, hostId, {
-      userId: uuid?.userId,
-      hostId,
-      action,
-      answer
-    });
+    if (action === "accept") {
+      const data = await createAnswer(offer);
+      answer = data.answer;
+      senStreams(data.peerConnection);
+      getStreams(data.peerConnection);
+    }
     socket.emit("join_request_action", {
       userId: uuid?.userId,
       hostId,
@@ -41,14 +68,9 @@ function Dashboard() {
 
   useEffect(() => {
     if (!uuid?.userId) return;
-    socket.on("connect", () => {
-      console.log("connected");
-    });
-    socket.on("disconnect", () => {
-      console.log("dis");
-    });
+    socket.on("connect", () => console.log("connected"));
+    socket.on("disconnect", () => console.log("dis"));
     socket.on(`join_request-${uuid?.userId}`, (data) => {
-      console.log("Request", data);
       set_requests((prev) => {
         if (!prev?.find((item) => item?.hostId === data?.hostId)) {
           return [...prev, data];
@@ -56,10 +78,13 @@ function Dashboard() {
         return prev;
       });
     });
-    socket.on(`join_request_response-${uuid?.userId}`, (data) => {
-      console.log("Response", data);
+    socket.on(`join_request_response-${uuid?.userId}`, async (data) => {
       if (data?.action === "accept") {
-        acceptOffer(data?.answer);
+        const peer = await acceptOffer(data?.answer);
+        if(peer) {
+          handle_remote_streams(peer);
+          getStreams(peer);
+        }
       }
     });
     return () => {
@@ -71,15 +96,19 @@ function Dashboard() {
   }, [uuid]);
 
   useEffect(() => {
-    (async () => {
-      const tracks = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      setAudioTracks(tracks);
-    })();
+    peerConnection.addEventListener('negotiationneeded', handle_negotiation_request);
+    return () => {
+      peerConnection.removeEventListener('negotiationneeded', () => {});
+    }
   }, []);
 
   return (
     <div className="relative min-h-screen">
       <div className="flex">
+        <div>
+          <ReactPlayer url={allTracks} muted controls playing />
+          {remoteStream && <ReactPlayer url={remoteStream} muted controls playing />}
+        </div>
         <div className="flex-grow">
           {
             requests.map((item) => {

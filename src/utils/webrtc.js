@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 const servers = {
     iceServers: [
@@ -7,6 +7,7 @@ const servers = {
         }
     ]
 };
+
 const pcConstraints = {
     'optional': [
         { 'DtlsSrtpKeyAgreement': true },
@@ -14,34 +15,43 @@ const pcConstraints = {
 };
 
 export const useWebrtc = () => {
-    let peerConnection = new RTCPeerConnection(servers);
+    let peerConnection = useMemo(() => new RTCPeerConnection(servers), []);
 
-    const createOffer = async () => {
-        const offer = await peerConnection.createOffer();     // P1 - Call -> P2
-        console.log(offer);                                   // Call -> Offer
-        peerConnection.setLocalDescription(offer);            // Offer is local connection
-        return offer;
+    const get_ice_candidates = () => {
+        const handleICECandidate = (event) => {
+            if (event.candidate) {
+                console.log("New ICE candidate:", event.candidate);
+            }
+        };
+
+        peerConnection.addEventListener("icecandidate", handleICECandidate);
     }
 
+    const createOffer = async () => {
+        get_ice_candidates();
+        const offer = await peerConnection.createOffer();     // P1 - Call -> P2
+        peerConnection.setLocalDescription(offer);            // Offer is local connection
+        return offer;
+    };
+    
     const createAnswer = async (offer) => {
+        get_ice_candidates();
         await peerConnection.setRemoteDescription(offer);     // P2 -> offer save as remote connection
         const answer = await peerConnection.createAnswer();   // P2 -> Accept -> P1
         peerConnection.setLocalDescription(answer);           // P2 -> Answer
-        return answer;                                        // P2 -> Answer - Local connection
+        return { answer, peerConnection };                                        // P2 -> Answer - Local connection
     }
 
     const acceptOffer = async (answer) => {
-        if(peerConnection.currentRemoteDescription) return;   // P1 -> Answer -> Remote connection
+        if (peerConnection.currentRemoteDescription) return;   // P1 -> Answer -> Remote connection
         await peerConnection.setRemoteDescription(answer);
-    }
-
-    const resetConnection = () => {
-        peerConnection = new RTCPeerConnection(servers);
+        return peerConnection;
     }
 
     return {
         createOffer,
         createAnswer,
-        acceptOffer
+        acceptOffer,
+        peerConnection
     }
 }
