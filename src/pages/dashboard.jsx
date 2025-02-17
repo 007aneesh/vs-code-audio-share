@@ -1,32 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import BottomNavbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
-import { getUserId } from "../utils/api";
 import { socket } from "../utils/socket";
 import { useWebrtc } from "../utils/webrtc";
 import { useAudio } from "../utils/audio";
 import ReactPlayer from "react-player";
+import useDashboardStore from "../utils/store";
 
 function Dashboard() {
-  const [uuid, setuuid] = useState();
   const [requests, set_requests] = useState([]);
   const [remoteStream, setRemoteStream] = useState();
 
-  const { allTracks } = useAudio(uuid);
-
   const { createAnswer, createOffer, acceptOffer, peerConnection } = useWebrtc();
 
-  async function getUser() {
-    const response = await getUserId();
-    setuuid(response.data);
-  }
+  const uuid = useDashboardStore((state) => state?.uuid);
 
-  useEffect(() => {
-    getUser();
-  }, []);
+  const { allTracks } = useAudio(uuid?.userId);
 
   const handle_negotiation_request = async () => {
     const offer = await createOffer();
+    console.log("NEGO");
     socket.emit("add_participant", {
       hostId: uuid?.userId,
       friends: data?.participants,
@@ -40,7 +33,7 @@ function Dashboard() {
       pc.addTrack(track, allTracks);
     });
   }
-  
+
   const getStreams = (peer) => {
     const pc = peer ?? peerConnection
     pc.ontrack = (event) => {
@@ -61,10 +54,10 @@ function Dashboard() {
       userId: uuid?.userId,
       hostId,
       action,
-      answer
+      answer,
     });
     set_requests((prev) => prev?.filter((item) => item.hostId !== hostId));
-  }
+  };
 
   useEffect(() => {
     if (!uuid?.userId) return;
@@ -81,7 +74,7 @@ function Dashboard() {
     socket.on(`join_request_response-${uuid?.userId}`, async (data) => {
       if (data?.action === "accept") {
         const peer = await acceptOffer(data?.answer);
-        if(peer) {
+        if (peer) {
           handle_remote_streams(peer);
           getStreams(peer);
         }
@@ -92,13 +85,13 @@ function Dashboard() {
       socket.off("disconnect");
       socket.off(`join_request-${uuid?.userId}`);
       socket.off(`join_request_response-${uuid?.userId}`);
-    }
+    };
   }, [uuid]);
 
   useEffect(() => {
     peerConnection.addEventListener('negotiationneeded', handle_negotiation_request);
     return () => {
-      peerConnection.removeEventListener('negotiationneeded', () => {});
+      peerConnection.removeEventListener('negotiationneeded', () => { });
     }
   }, []);
 
@@ -110,21 +103,30 @@ function Dashboard() {
           {remoteStream && <ReactPlayer url={remoteStream} muted controls playing />}
         </div>
         <div className="flex-grow">
-          {
-            requests.map((item) => {
-              return (
-                <div style={{
+          {requests.map((item, index) => {
+            return (
+              <div
+                key={index}
+                style={{
                   display: "flex",
                   flexDirection: "column",
-                  alignItems: "start"
-                }}>
-                  <p>{item?.hostId}</p>
-                  <button onClick={() => handle_action(item?.hostId, "accept", item?.offer)}>Accept</button>
-                  <button onClick={() => handle_action(item?.hostId, "decline")}>Decline</button>
-                </div>
-              )
-            })
-          }
+                  alignItems: "start",
+                }}
+              >
+                <p>{item?.hostId}</p>
+                <button
+                  onClick={() =>
+                    handle_action(item?.hostId, "accept", item?.offer)
+                  }
+                >
+                  Accept
+                </button>
+                <button onClick={() => handle_action(item?.hostId, "decline")}>
+                  Decline
+                </button>
+              </div>
+            );
+          })}
         </div>
         <Sidebar uuid={uuid} createOffer={createOffer} />
       </div>

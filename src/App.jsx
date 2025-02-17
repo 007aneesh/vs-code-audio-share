@@ -1,20 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Dashboard from "./pages/dashboard";
-import LoginForm from "./components/login";
+import useDashboardStore from "./utils/store";
 
 function App() {
-  const [loggedIn, setLoggedIn] = useState(true); 
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    setLoggedIn(true); 
-  };
+  const setUuid = useDashboardStore((state) => state.setUuid);
+
+  useEffect(() => {
+    const fetchUuid = async () => {
+      setLoading(true);
+      await setUuid();
+      setLoading(false);
+    };
+
+    fetchUuid();
+  }, [setUuid]);
 
   return (
     <>
-      {loggedIn ? (
-        <Dashboard />
+      {loading ? (
+        <div>Loading...</div>
       ) : (
-        <LoginForm onLogin={handleLogin} /> 
+        <Dashboard />
       )}
     </>
   );

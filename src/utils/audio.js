@@ -6,15 +6,12 @@ const getAudio = async () => {
 }
 
 export const useAudio = (uuid) => {
-    const [firstRender, setFirstRender] = useState(false);
+    const [firstRender, setFirstRender] = useState(true);
     const [allTracks, setAllTracks] = useState(null);
 
     useEffect(() => {
-        if(!uuid) return;
-        if(!firstRender) {
-            setFirstRender(true);
-            return;
-        }
+        if(!uuid || !firstRender) return;
+        setFirstRender(false);
         getAudio().then((tracks) => {
             setAllTracks(tracks);
         });

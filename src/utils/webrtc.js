@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useState } from "react"
 
 const servers = {
     iceServers: [
@@ -15,16 +15,14 @@ const pcConstraints = {
 };
 
 export const useWebrtc = () => {
-    let peerConnection = useMemo(() => new RTCPeerConnection(servers), []);
+    let peerConnection = new RTCPeerConnection(servers);
 
     const get_ice_candidates = () => {
-        const handleICECandidate = (event) => {
+        peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
-                console.log("New ICE candidate:", event.candidate);
+                console.log("Ice Candidates Fetched.");
             }
-        };
-
-        peerConnection.addEventListener("icecandidate", handleICECandidate);
+        }
     }
 
     const createOffer = async () => {
@@ -32,8 +30,8 @@ export const useWebrtc = () => {
         const offer = await peerConnection.createOffer();     // P1 - Call -> P2
         peerConnection.setLocalDescription(offer);            // Offer is local connection
         return offer;
-    };
-    
+    }
+
     const createAnswer = async (offer) => {
         get_ice_candidates();
         await peerConnection.setRemoteDescription(offer);     // P2 -> offer save as remote connection
@@ -45,7 +43,10 @@ export const useWebrtc = () => {
     const acceptOffer = async (answer) => {
         if (peerConnection.currentRemoteDescription) return;   // P1 -> Answer -> Remote connection
         await peerConnection.setRemoteDescription(answer);
-        return peerConnection;
+    }
+
+    const resetConnection = () => {
+        peerConnection = new RTCPeerConnection(servers);
     }
 
     return {
